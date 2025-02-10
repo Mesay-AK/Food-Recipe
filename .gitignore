@@ -1,0 +1,8 @@
+# Ignore Docker-related files
+*.log
+*.db
+.docker/
+postgres_data/
+
+# Ignore environment variables
+.env

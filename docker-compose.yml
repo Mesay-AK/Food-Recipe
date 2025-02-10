@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: food_recipes
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  hasura:
+    image: hasura/graphql-engine:v2.40.1  
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:mysecretpassword@postgres:5432/food_recipes
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+
+volumes:
+  postgres_data:
