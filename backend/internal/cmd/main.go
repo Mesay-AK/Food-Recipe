@@ -1,11 +1,16 @@
-
+// /main.go
 package main
 
 import (
-	"your_project/handler"
+	"food-recipe/internal/cmd/routes"
+	"log"
+
 )
 
 func main() {
-	// Start the GraphQL server
-	handler.StartGraphQLServer()
+	
+	router := routes.SetupRoutes();
+	if err:= router.Run(":8083"); err != nil{
+		log.Fatal("Server failed to start: ", err)
+	}
 }

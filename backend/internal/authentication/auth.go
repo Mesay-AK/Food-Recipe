@@ -3,65 +3,110 @@ package authentication
 import (
 	"fmt"
 	"time"
+	"net/http"
+	"food-recipe/internal/database"
 	"food-recipe/internal/handler"
 	"food-recipe/internal/models"
-	"food-recipe/internal/database"
 )
 
-func RegisterUser(username, email, password string) (string, error) {
-    
-    user := models.User{
-        Name: username,
-        Email:    email,
-        Password: password,
-    }
-    
-    err := models.ValidateUser(user)
-	if err != nil{
-		return "", err
+// RegisterUser - Registers a new user
+func RegisterUser(name, email, password string) (string, string, error) {
+	user := models.User{
+		Name: name,
+		Email:    email,
+		Password: password,
 	}
 
-    _, err = database.GetUserByEmail(email); 
-    if err == nil {
-        return "", fmt.Errorf("email already exists: %w", err)
-    }
-
-    hashedPassword, err := handler.HashPassword(password);
-	if err != nil{
-		return "", err
+	// Validate the user data
+	err := models.ValidateUser(user)
+	if err != nil {
+		return "", "", err
 	}
-    user.Password = hashedPassword;
 
-    _, err = database.InsertUserIntoHasura(user)
-    if err != nil {
-        return "", fmt.Errorf("failed to insert user into database: %w", err)
-    }
+	// Check if the user already exists
+	_, err = database.GetUserByEmail(email)
+	if err == nil {
+		return "", "", fmt.Errorf("email already exists")
+	}
 
-    return "user registered successfully", nil
+	// Hash password
+	hashedPassword, err := handler.HashPassword(password)
+	if err != nil {
+		return "", "", err
+	}
+	user.Password = hashedPassword
+
+	// Insert user into the database
+	_, err = database.InsertUserIntoHasura(user)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to insert user: %w", err)
+	}
+
+	// Generate access and refresh tokens
+	accessToken, err := handler.GenerateJWT(24*time.Hour, false, user.Name, user.ID, user.Email)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	refreshToken, err := handler.GenerateJWT(7*24*time.Hour, true, user.Name, user.ID, user.Email)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	// Store the refresh token in the database
+	err = database.StoreRefreshToken(user.ID, refreshToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
+// LoginUser - Logs in the user
+func LoginUser(email, password string, w http.ResponseWriter) (string, string, error) {
+	user, err := database.GetUserByEmail(email)
+	if err != nil {
+		return "", "", fmt.Errorf("user not found")
+	}
 
-func LoginUser(username, password string) (string,string, error) {
-    
-    user, err := database.GetUserByEmail(username)
+	// Verify the password
+	err = handler.VerifyPassword(password, user.Password)
+	if err != nil {
+		return "", "", fmt.Errorf("incorrect password")
+	}
 
-    if err != nil {
-        return "", "", fmt.Errorf("failed to find user: %w", err)
-    }
+	// Generate access and refresh tokens
+	accessToken, err := handler.GenerateJWT(24*time.Hour, false, user.Name, user.ID, user.Email)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate access token: %w", err)
+	}
 
-    err = handler.VerifyPassword(password, user.Password)
-    if err != nil{
-        return "","", fmt.Errorf("incorrect password")
-    }
+	refreshToken, err := handler.GenerateJWT(7*24*time.Hour, true, user.Name, user.ID, user.Email)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
+	}
 
-    token, err := handler.GenerateJWT(24*time.Hour, false, user.Name, user.ID, user.Email) // 
-    if err != nil {
-        return "", "", fmt.Errorf("failed to generate token: %w", err)
-    }
-    refreshToken, err := handler.GenerateJWT(7*24*time.Hour, true, user.Name, user.ID, user.Email)
-    if err != nil {
-        return "","", fmt.Errorf("failed to refresh token: %w", err)
-    }
+	// Store the refresh token in the database
+	err = database.StoreRefreshToken(user.ID, refreshToken)
+	if err != nil {
+		return "", "", err
+	}
 
-    return token, refreshToken, nil
+	return accessToken, refreshToken, nil
+}
+
+// RefreshAccessToken - Refreshes the access token using the refresh token
+func RefreshAccessToken(refreshToken string) (string, error) {
+	userID, name, email, err := database.ValidateRefreshToken(refreshToken)
+	if err != nil {
+		return "", fmt.Errorf("invalid refresh token")
+	}
+
+	// Generate new access token
+	newToken, err := handler.GenerateJWT(24*time.Hour, false, name, userID, email)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate new access token: %w", err)
+	}
+
+	return newToken, nil
 }

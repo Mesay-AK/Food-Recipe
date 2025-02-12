@@ -7,3 +7,7 @@ type User struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
+type LoginDetails struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	}

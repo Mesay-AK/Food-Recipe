@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 	"github.com/dgrijalva/jwt-go"
+	"fmt"
 )
 
 var secretKey = []byte(os.Getenv("JWT_SECRET"))
@@ -16,9 +17,8 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-
 func GenerateJWT(expiry time.Duration, useRefreshSecret bool, name, userID, email string) (string, error) {
-	// Choose the correct secret key
+
 	var secretType []byte
 	if useRefreshSecret {
 		secretType = refreshSecretKey
@@ -34,15 +34,18 @@ func GenerateJWT(expiry time.Duration, useRefreshSecret bool, name, userID, emai
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
-			Issuer:    "hasura-auth",
+			Issuer:    "hasura-auth", 
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(secretType)
 	if err != nil {
-		return "", err
+
+		return "", fmt.Errorf("error signing the JWT token: %w", err)
 	}
+
+
 
 	return signedToken, nil
 }
