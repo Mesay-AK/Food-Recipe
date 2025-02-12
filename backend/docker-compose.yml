@@ -22,6 +22,8 @@ services:
       HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:mysecretpassword@postgres:5432/food_recipes
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+      HASURA_GRAPHQL_JWT_SECRET: '{"type": "HS256", "key": "your_jwt_secret_key"}'
+
 
 volumes:
   postgres_data:
