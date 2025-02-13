@@ -2,7 +2,7 @@ package database
 
 import (
     "fmt"
-    "food-recipe/internal/models"
+    "food-recipe/models"
     "github.com/machinebox/graphql"
 	"time"
 	"context"

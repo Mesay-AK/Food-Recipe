@@ -1,8 +1,8 @@
 package controller
 
 import (
-    "food-recipe/internal/authentication"
-    "food-recipe/internal/models"
+    "food-recipe/authentication"
+    "food-recipe/models"
 	"net/http"
 	"github.com/gin-gonic/gin"
 )

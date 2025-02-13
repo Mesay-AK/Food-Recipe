@@ -2,7 +2,7 @@
 package main
 
 import (
-	"food-recipe/internal/cmd/routes"
+	"food-recipe/cmd/routes"
 	"log"
 
 )

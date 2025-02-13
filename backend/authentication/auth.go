@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 	"net/http"
-	"food-recipe/internal/database"
-	"food-recipe/internal/handler"
-	"food-recipe/internal/models"
+	"food-recipe/database"
+	"food-recipe/handler"
+	"food-recipe/models"
 
 )
 

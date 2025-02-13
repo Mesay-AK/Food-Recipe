@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"food-recipe/internal/cmd/controller"
+	"food-recipe/cmd/controller"
 	"github.com/gin-gonic/gin"
 )
 
