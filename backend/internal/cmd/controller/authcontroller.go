@@ -87,3 +87,49 @@ func RefreshToken(c *gin.Context) {
 		"access_token": newToken,
 	})
 }
+
+
+func ForgotPassword(c *gin.Context) {
+	var email models.Email;
+	if err := c.ShouldBindJSON(&email); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset email sent"})
+}
+
+func ResetPassword(c *gin.Context) {
+
+	var requestData models.ResetrequestData;
+
+	if err := c.ShouldBindJSON(&requestData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if err := authentication.ResetPassword(requestData); err != nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while resetting password"})
+	
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
+}
+
+func Logout(c *gin.Context) {
+	// Get refresh token from cookie
+	refreshToken, err := c.Cookie("refresh_token")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No refresh token found"})
+		return
+	}
+	if err := authentication.Logout(refreshToken); err!=nil{
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log out"})
+		return 
+	}
+
+
+	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}

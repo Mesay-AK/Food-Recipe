@@ -76,7 +76,7 @@ func InsertUserIntoHasura(user models.User) (models.User, error) {
 func StoreRefreshToken(userID, refreshToken string) error {
     expiration := time.Now().Add(time.Hour * 24 * 7)
 
-    // Optionally, remove any previous refresh tokens for the user.
+
     err := RemoveOldRefreshTokens(userID)
     if err != nil {
         return fmt.Errorf("failed to remove old refresh tokens: %w", err)
@@ -125,6 +125,23 @@ func RemoveOldRefreshTokens(userID string) error {
     return nil
 }
 
+func DeleteRefreshToken(token string) error {
+	req := graphql.NewRequest(`
+        mutation ($token: String!) {
+            delete_refresh_tokens(where: {token: {_eq: $token}}) {
+                affected_rows
+            }
+        }
+    `)
+
+	req.Var("token", token)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	return client.Run(ctx, req, nil)
+}
+
 func ValidateRefreshToken(token string) (string, string, string, error) {
     req := graphql.NewRequest(`
         query ($token: String!) {
@@ -170,4 +187,77 @@ func ValidateRefreshToken(token string) (string, string, string, error) {
 
     user := respData.RefreshTokens[0].User
     return user.ID, user.Name, user.Email, nil
+}
+
+func StorePasswordResetRequest(userID, resetToken string) error {
+	expirationTime := time.Now().Add(24 * time.Hour)
+	req := graphql.NewRequest(`
+		mutation($user_id: String!, $token: String!, $expires_at: timestamptz!) {
+			insert_reset_requests(objects: {user_id: $user_id, token: $token, expiration_time: $expires_at}) {
+				affected_rows
+			}
+		}
+	`)
+	req.Var("user_id", userID)
+	req.Var("token", resetToken)
+	req.Var("expires_at", expirationTime)
+
+	if err := client.Run(context.Background(), req, nil); err != nil {
+		return fmt.Errorf("failed to store reset request: %w", err)
+	}
+
+	return nil
+}
+
+func ValidatePasswordResetToken(token string) (string, error) {
+	req := graphql.NewRequest(`
+		query($token: String!) {
+			reset_requests(where: {token: {_eq: $token}}) {
+				user_id
+				expiration_time
+			}
+		}
+	`)
+	req.Var("token", token)
+
+	var respData struct {
+		ResetRequests []struct {
+			UserID        string    `json:"user_id"`
+			ExpirationTime time.Time `json:"expiration_time"`
+		}
+	}
+
+	if err := client.Run(context.Background(), req, &respData); err != nil {
+		return "", fmt.Errorf("failed to validate reset token: %w", err)
+	}
+
+	if len(respData.ResetRequests) == 0 {
+		return "", fmt.Errorf("invalid token")
+	}
+
+
+	if time.Now().After(respData.ResetRequests[0].ExpirationTime) {
+		return "", fmt.Errorf("token expired")
+	}
+
+	return respData.ResetRequests[0].UserID, nil
+}
+
+
+func UpdateUserPassword(userID, hashedPassword string) error {
+	req := graphql.NewRequest(`
+		mutation($user_id: String!, $password: String!) {
+			update_users(where: {id: {_eq: $user_id}}, _set: {password: $password}) {
+				affected_rows
+			}
+		}
+	`)
+	req.Var("user_id", userID)
+	req.Var("password", hashedPassword)
+
+	if err := client.Run(context.Background(), req, nil); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
 }

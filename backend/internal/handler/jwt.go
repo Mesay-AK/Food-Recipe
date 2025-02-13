@@ -5,6 +5,8 @@ import (
 	"time"
 	"github.com/dgrijalva/jwt-go"
 	"fmt"
+	"crypto/rand"
+	"encoding/base64"
 )
 
 var secretKey = []byte(os.Getenv("JWT_SECRET"))
@@ -48,4 +50,18 @@ func GenerateJWT(expiry time.Duration, useRefreshSecret bool, name, userID, emai
 
 
 	return signedToken, nil
+}
+
+
+func GenerateResetToken() (string, error) {
+
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate reset token: %w", err)
+	}
+
+	token := base64.URLEncoding.EncodeToString(bytes)
+
+	return token, nil
 }
