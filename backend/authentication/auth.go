@@ -9,105 +9,101 @@ import (
 	"food-recipe/models"
 
 )
-
-// RegisterUser - Registers a new user
 func RegisterUser(name, email, password string) (string, string, error) {
+
 	user := models.User{
-		Name: name,
+		Name:     name,
 		Email:    email,
 		Password: password,
+		Role:     "user",  
 	}
 
-	// Validate the user data
 	err := models.ValidateUser(user)
 	if err != nil {
 		return "", "", err
 	}
 
-	// Check if the user already exists
 	_, err = database.GetUserByEmail(email)
 	if err == nil {
 		return "", "", fmt.Errorf("email already exists")
 	}
 
-	// Hash password
 	hashedPassword, err := handler.HashPassword(password)
 	if err != nil {
 		return "", "", err
 	}
 	user.Password = hashedPassword
 
-	// Insert user into the database
 	_, err = database.InsertUserIntoHasura(user)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to insert user: %w", err)
 	}
 
-	// Generate access and refresh tokens
-	accessToken, err := handler.GenerateJWT(24*time.Hour, false, user.Name, user.ID, user.Email)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate access token: %w", err)
-	}
-
-	refreshToken, err := handler.GenerateJWT(7*24*time.Hour, true, user.Name, user.ID, user.Email)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-
-	// Store the refresh token in the database
-	err = database.StoreRefreshToken(user.ID, refreshToken)
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
+	return "Registration successful! Please log in.", "", nil
 }
 
 
 func LoginUser(email, password string, w http.ResponseWriter) (string, string, error) {
-	user, err := database.GetUserByEmail(email)
-	if err != nil {
-		return "", "", fmt.Errorf("user not found")
-	}
+    user, err := database.GetUserByEmail(email)
+    if err != nil {
+        return "", "", fmt.Errorf("user not found")
+    }
 
+    err = handler.VerifyPassword(password, user.Password)
+    if err != nil {
+        return "", "", fmt.Errorf("incorrect password")
+    }
 
-	err = handler.VerifyPassword(password, user.Password)
-	if err != nil {
-		return "", "", fmt.Errorf("incorrect password")
-	}
+    allowedRoles := []string{"user"} 
+    if user.Role == "admin" {
+        allowedRoles = append(allowedRoles, "admin") 
+    }
 
-	accessToken, err := handler.GenerateJWT(24*time.Hour, false, user.Name, user.ID, user.Email)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate access token: %w", err)
-	}
+    accessToken, err := handler.GenerateJWT(24*time.Hour, false, user.Name, user.ID, user.Email, user.Role, allowedRoles)
+    if err != nil {
+        return "", "", fmt.Errorf("failed to generate access token: %w", err)
+    }
 
-	refreshToken, err := handler.GenerateJWT(7*24*time.Hour, true, user.Name, user.ID, user.Email)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
-	}
+    refreshToken, err := handler.GenerateJWT(7*24*time.Hour, true, user.Name, user.ID, user.Email, user.Role, allowedRoles)
+    if err != nil {
+        return "", "", fmt.Errorf("failed to generate refresh token: %w", err)
+    }
 
+    err = database.StoreRefreshToken(user.ID, refreshToken)
+    if err != nil {
+        return "", "", err
+    }
 
-	err = database.StoreRefreshToken(user.ID, refreshToken)
-	if err != nil {
-		return "", "", err
-	}
-
-	return accessToken, refreshToken, nil
+    return accessToken, refreshToken, nil
 }
+
 
 func RefreshAccessToken(refreshToken string) (string, error) {
-	userID, name, email, err := database.ValidateRefreshToken(refreshToken)
-	if err != nil {
-		return "", fmt.Errorf("invalid refresh token")
-	}
+    userID, name, email, err := database.ValidateRefreshToken(refreshToken)
+    if err != nil {
+        return "", fmt.Errorf("invalid refresh token")
+    }
 
-	newToken, err := handler.GenerateJWT(24*time.Hour, false, name, userID, email)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate new access token: %w", err)
-	}
 
-	return newToken, nil
+    user, err := database.GetUserByEmail(email) 
+    if err != nil {
+        return "", fmt.Errorf("error fetching user details: %w", err)
+    }
+
+
+    allowedRoles := []string{"user"}  
+    if user.Role == "admin" {
+        allowedRoles = append(allowedRoles, "admin") 
+    }
+
+    newToken, err := handler.GenerateJWT(24*time.Hour, false, name, userID, email, user.Role, allowedRoles)
+    if err != nil {
+        return "", fmt.Errorf("failed to generate new access token: %w", err)
+    }
+
+    return newToken, nil
 }
+
 
 func ForgotPassword(email models.Email)(error){
 

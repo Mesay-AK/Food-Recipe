@@ -1,25 +1,21 @@
 package handler
 
 import (
-	"os"
-	"time"
-	"github.com/dgrijalva/jwt-go"
-	"fmt"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
+	"food-recipe/models"
+	"os"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 var secretKey = []byte(os.Getenv("JWT_SECRET"))
 var refreshSecretKey = []byte(os.Getenv("JWT_REFRESH_SECRET"))
 
-type Claims struct {
-	UserID string `json:"user_id"`
-	Name   string `json:"name"`
-	Email  string `json:"email"`
-	jwt.StandardClaims
-}
 
-func GenerateJWT(expiry time.Duration, useRefreshSecret bool, name, userID, email string) (string, error) {
+func GenerateJWT(expiry time.Duration, useRefreshSecret bool, name, userID, email, role string, allowedRoles []string) (string, error) {
 
 	var secretType []byte
 	if useRefreshSecret {
@@ -30,24 +26,25 @@ func GenerateJWT(expiry time.Duration, useRefreshSecret bool, name, userID, emai
 
 	expirationTime := time.Now().Add(expiry)
 
-	claims := &Claims{
-		UserID: userID,
-		Name:   name,
-		Email:  email,
+	claims := &models.Claims{
+		Name:  name,
+		Email: email,
+		HasuraClaims: models.HasuraClaims{
+			UserID: userID,
+			Role:   role,
+			Roles:  allowedRoles,
+		},
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
-			Issuer:    "hasura-auth", 
+			Issuer:    "hasura-auth",
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(secretType)
 	if err != nil {
-
 		return "", fmt.Errorf("error signing the JWT token: %w", err)
 	}
-
-
 
 	return signedToken, nil
 }

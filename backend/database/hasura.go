@@ -22,6 +22,7 @@ func GetUserByEmail(email string) (models.User, error) {
                 username
                 email
                 password
+                role
             }
         }
     `)
@@ -53,6 +54,7 @@ func InsertUserIntoHasura(user models.User) (models.User, error) {
                 id
                 username
                 email
+                role
             }
         }
     `)
@@ -60,19 +62,24 @@ func InsertUserIntoHasura(user models.User) (models.User, error) {
     req.Var("name", user.Name)
     req.Var("email", user.Email)
     req.Var("password", user.Password)
+    req.Var("role", user.Role) 
 
     var respData struct {
         InsertUser models.User `json:"insert_users_one"`
     }
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+	defer cancel()
+
     if err := client.Run(ctx, req, &respData); err != nil {
         return models.User{}, fmt.Errorf("failed to insert user: %w", err)
     }
 
     return respData.InsertUser, nil
 }
+
+
+
 func StoreRefreshToken(userID, refreshToken string) error {
     expiration := time.Now().Add(time.Hour * 24 * 7)
 
