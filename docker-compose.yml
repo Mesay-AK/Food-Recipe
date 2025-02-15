@@ -23,7 +23,33 @@ services:
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
       HASURA_GRAPHQL_JWT_SECRET: '{"type": "HS256", "key": "your_jwt_secret_key"}'
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: anonymous
 
+  backend:
+    build:
+      context: ./backend  # Updated path to point to the backend folder
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    depends_on:
+      - hasura
+      - postgres
+    environment:
+      - DATABASE_URL=postgres://postgres:mysecretpassword@postgres:5432/food_recipes
+      - HASURA_GRAPHQL_ADMIN_SECRET=myadminsecretkey
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend  
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+    restart: always
 
 volumes:
   postgres_data:
