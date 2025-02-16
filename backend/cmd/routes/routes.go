@@ -18,6 +18,7 @@ func SetupRoutes()*gin.Engine {
 	router.POST("/verify/:tx_ref",controller.VerifyPayment)
 	router.POST("/status",controller.StatusUpdate )
 	router.POST("/webhooks", controller.Webhooks)
+	router.POST("/recipes", controller.UploadRecipe)
 
 	return router
 }
