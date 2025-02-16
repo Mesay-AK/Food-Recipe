@@ -27,7 +27,7 @@ services:
 
   backend:
     build:
-      context: ./backend  # Updated path to point to the backend folder
+      context: ./backend  
       dockerfile: Dockerfile
     ports:
       - "8081:8081"

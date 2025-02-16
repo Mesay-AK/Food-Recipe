@@ -1,21 +1,22 @@
-
 FROM golang:1.22.5 AS builder
 
-WORKDIR /app
+WORKDIR /backend
 
 COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY . .
+COPY . . 
 
-RUN go build -o main .
+WORKDIR /backend/cmd
+
+RUN go build -o /backend/main .
 
 FROM alpine:latest
 
 WORKDIR /root/
 
-COPY --from=builder /app/main .
+COPY --from=builder /backend/main .
 
 EXPOSE 8081
 
