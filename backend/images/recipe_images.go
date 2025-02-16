@@ -6,6 +6,7 @@ import (
 	"food-recipe/handler"
 	"food-recipe/models"
 	"mime/multipart"
+	"strings"
 )
 
 
@@ -30,15 +31,45 @@ func InsertRecipe(userID string, title string, description string, files []*mult
 
 		imageURLs = append(imageURLs, models.RecipeImage{
 			ImageURL:   url,
-			IsFeatured: i == 0, // First image is featured
+			IsFeatured: i == 0, 
 		})
 	}
 
-	// Insert recipe and images into Hasura
+
 	recipeData, err := database.InsertRecipeWithImages(userID, title, description, imageURLs)
 	if err != nil {
 		return nil, err
 	}
 
 	return recipeData, nil
+}
+
+
+func UpdateFeaturedImage(recipeID int, newFeaturedID int) error {
+	err := database.UpdateFeaturedImage(recipeID, newFeaturedID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+
+func DeleteRecipeImage(imageID int, imageURL string) error {
+
+	imagePath := strings.Split(imageURL, ".com/")[1]
+
+	err := handler.DeleteImage(imagePath)
+	if err != nil {
+		return err
+	}
+
+
+	err = database.DeleteRecipeImage(imageID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

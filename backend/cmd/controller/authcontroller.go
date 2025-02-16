@@ -16,26 +16,14 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// Perform registration
-	accessToken, refreshToken, err := authentication.RegisterUser(user.Name, user.Email, user.Password)
+	err := authentication.RegisterUser(user.Name, user.Email, user.Password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set refresh token as cookie
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/",
-		MaxAge:   7 * 24 * 60 * 60, // 1 week
-	})
-
-
 	c.JSON(http.StatusOK, gin.H{
-		"access_token":  accessToken,
+		"message":  "registration Complete",
 	})
 }
 

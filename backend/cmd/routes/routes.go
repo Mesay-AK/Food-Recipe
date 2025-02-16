@@ -16,9 +16,12 @@ func SetupRoutes()*gin.Engine {
 	router.POST("/auth/logout", controller.Logout)
 	router.POST("/inititate",controller.InitiatePayment )
 	router.POST("/verify/:tx_ref",controller.VerifyPayment)
-	router.POST("/status",controller.StatusUpdate )
 	router.POST("/webhooks", controller.Webhooks)
-	router.POST("/recipes", controller.UploadRecipe)
+	router.POST("/recipes", controller.UploadRecipeImage)
+	router.DELETE("/recipe-images/:image_id", controller.DeleteRecipeImage)
+	router.PUT("/recipe-images/:recipe_id/featured/:new_featured_id", controller.UpdateFeaturedImage)
+
+
 
 	return router
 }

@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"food-recipe/images"
+	"strconv"
 )
 
-func UploadRecipe(c *gin.Context) {
+func UploadRecipeImage(c *gin.Context) {
 	userID := c.MustGet("user_id").(string) // Extract from middleware
 	title := c.PostForm("title")
 	description := c.PostForm("description")
@@ -31,4 +32,48 @@ func UploadRecipe(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"recipe": recipe})
+}
+
+
+func UpdateFeaturedImage(c *gin.Context) {
+	recipeID, err := strconv.Atoi(c.Param("recipe_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid recipe ID"})
+		return
+	}
+
+	newFeaturedID, err := strconv.Atoi(c.Param("new_featured_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	err = images.UpdateFeaturedImage(recipeID, newFeaturedID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update featured image"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Featured image updated successfully"})
+}
+
+
+func DeleteRecipeImage(c *gin.Context) {
+	// userID := c.MustGet("user_id").(string) 
+
+	imageID, err := strconv.Atoi(c.Param("image_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image ID"})
+		return
+	}
+
+	imageURL := c.Query("image_url") // Pass the image URL as a query param
+
+	err = images.DeleteRecipeImage(imageID, imageURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete image"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Image deleted successfully"})
 }
