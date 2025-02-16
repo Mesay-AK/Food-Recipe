@@ -17,6 +17,7 @@ func SetupRoutes()*gin.Engine {
 	router.POST("/inititate",controller.InitiatePayment )
 	router.POST("/verify/:tx_ref",controller.VerifyPayment)
 	router.POST("/status",controller.StatusUpdate )
+	router.POST("/webhooks", controller.Webhooks)
 
 	return router
 }

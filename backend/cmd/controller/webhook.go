@@ -1,24 +1,27 @@
 package controller
 
 import (
-    "github.com/gin-gonic/gin"
-    "net/http"
+	"log"
+	"net/http"
+	"food-recipe/payments"
+	"github.com/gin-gonic/gin"
 )
 
 
-func HandleWebhook(c *gin.Context) {
-    var payload map[string]interface{}
-    if err := c.ShouldBindJSON(&payload); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid webhook data"})
-        return
-    }
+func Webhooks(c *gin.Context) {
+	var webhookData map[string]interface{}
+	if err := c.ShouldBindJSON(&webhookData); err != nil {
+		log.Println("Error reading Chapa webhook body:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid payload"})
+		return
+	}
 
-    txRef, _ := payload["tx_ref"].(string)
-    status, _ := payload["status"].(string)
+	err := payments.ProcessPayment(webhookData)
+	if err != nil {
+		log.Println("Error processing payment:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Error processing payment"})
+		return
+	}
 
-    if status == "success" {
-        c.JSON(http.StatusOK, gin.H{"message": "Payment successful", "tx_ref": txRef})
-    } else {
-        c.JSON(http.StatusBadRequest, gin.H{"message": "Payment failed"})
-    }
+	c.JSON(http.StatusOK, gin.H{"message": "Webhook processed successfully"})
 }
