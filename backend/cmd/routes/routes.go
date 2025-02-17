@@ -20,6 +20,8 @@ func SetupRoutes()*gin.Engine {
 	router.POST("/recipes", controller.UploadRecipeImage)
 	router.DELETE("/recipe-images/:image_id", controller.DeleteRecipeImage)
 	router.PUT("/recipe-images/:recipe_id/featured/:new_featured_id", controller.UpdateFeaturedImage)
+	router.POST("/webhook/user-registered",  controller.UserRegisteredWebhook)
+	router.POST("/webhook/purchase-confirmed",  controller.PurchaseConfirmedWebhook)
 
 
 

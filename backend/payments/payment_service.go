@@ -6,13 +6,13 @@ import (
 	"errors"
 	"food-recipe/models"
 	"food-recipe/database"
-	"food-recipe/handler"
+	// "food-recipe/handler"
 	"net/http"
 	"os"
 	"fmt"
 )
 
-// Initiates a payment request
+
 func InitiatePayment(amount, email, firstName, lastName, txRef string) (string, error) {
     url := "https://api.chapa.co/v1/transaction/initialize"
 
@@ -50,7 +50,6 @@ func InitiatePayment(amount, email, firstName, lastName, txRef string) (string, 
     return paymentResp.Data.CheckoutURL, nil
 }
 
-// Verifies a payment status by transaction reference
 func VerifyPayment(txRef string) (bool, error) {
     url := "https://api.chapa.co/v1/transaction/verify/" + txRef
 
@@ -85,45 +84,27 @@ func ProcessPayment(webhookData map[string]interface{}) error {
 		return fmt.Errorf("email not found in webhook data")
 	}
 
-	// Get the user by email
+
 	user, err := database.GetUserByEmail(userEmail)
 	if err != nil {
 		return fmt.Errorf("user not found: %w", err)
 	}
 
-	// Create the purchase record
 	purchase := models.Purchase{
 		UserID:   user.ID,
 		Amount:   webhookData["amount"].(string),
 		Status:   "success",
 		TxRef:    webhookData["tx_ref"].(string),
-		RecipeID: 0, // Optional: You can include recipe ID if you are tracking which recipe was purchased
+		RecipeID: 0, 
 	}
 
-	// Save the purchase in the database
+
 	err = database.SavePurchase(purchase)
 	if err != nil {
 		return fmt.Errorf("failed to save purchase: %w", err)
 	}
 
-	// Send transaction success email
-	err = sendTransactionSuccessEmail(user)
-	if err != nil {
-		return fmt.Errorf("failed to send success email: %w", err)
-	}
 
 	return nil
 }
 
-// Sends a success email to the user after payment is processed
-func sendTransactionSuccessEmail(user models.User) error {
-    subject := "Payment Successful"
-    body := fmt.Sprintf("Dear %s,\n\nYour payment was successful. Thank you for your purchase!\n\nBest Regards,\nThe Team", user.Name)
-
-    err := handler.SendEmail(user.Email, subject, body)
-    if err != nil {
-        return fmt.Errorf("error sending email: %w", err)
-    }
-
-    return nil
-}

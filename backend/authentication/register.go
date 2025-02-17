@@ -35,19 +35,11 @@ func RegisterUser(name, email, password string) (error) {
 
 	user.Password = hashedPassword
 
-	newUser, err := database.InsertUserIntoHasura(user)
+	_, err = database.InsertUserIntoHasura(user)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
 	}
-	subject := "Welcome to Food Recipe App!"
-	body := fmt.Sprintf(
-		"Hi %s,\n\nWelcome to Food Recipe App! We're excited to have you on board.\n\nHappy Cooking!\n\nBest regards,\nFood Recipe Team",
-		newUser.Name,
-	)
 
-	if err := handler.SendEmail(newUser.Email, subject, body); err != nil {
-		return fmt.Errorf("Failed to send welcome email: %v", err)
-	}
 
 	return nil
 }

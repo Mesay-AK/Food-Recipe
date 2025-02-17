@@ -27,7 +27,6 @@ func InitiatePayment(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"checkout_url": checkoutURL})
 }
 
-// Verifies the payment status after redirect
 func VerifyPayment(c *gin.Context) {
     txRef := c.Param("tx_ref")
 
@@ -44,7 +43,7 @@ func VerifyPayment(c *gin.Context) {
     }
 }
 
-// Handles payment status updates (webhook)
+
 func Webhooks(c *gin.Context) {
     var webhookData map[string]interface{}
     if err := c.ShouldBindJSON(&webhookData); err != nil {
