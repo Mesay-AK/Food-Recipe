@@ -39,42 +39,12 @@ The **Food Recipes** project is a web application that allows users to browse, s
 ### Monetization
 - Users can buy premium recipes
 
-## Design Considerations
-- The website must be highly attractive and visually engaging
-- Inspiration should be drawn from existing online food recipe platforms
-
 ## Tech Stack (Suggested)
 - **Frontend:** React.js / Vue.js
-- **Backend:** Node.js (Express) / Django / ASP.NET
-- **Database:** PostgreSQL / MongoDB
-- **Authentication:** JWT / OAuth
-- **Hosting:** Vercel / Netlify / AWS
+- **Backend:** Golang
+- **Database:** PostgreSQL
+- **Authentication:** JWT 
 
-## Installation & Setup
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/your-username/food-recipes.git
-   ```
-2. Navigate to the project directory:
-   ```sh
-   cd food-recipes
-   ```
-3. Install dependencies:
-   ```sh
-   npm install # or yarn install
-   ```
-4. Run the development server:
-   ```sh
-   npm run dev # or yarn dev
-   ```
-
-## Contributing
-Contributions are welcome! Please follow these steps:
-1. Fork the repository
-2. Create a new branch: `git checkout -b feature-name`
-3. Commit your changes: `git commit -m 'Add new feature'`
-4. Push to the branch: `git push origin feature-name`
-5. Submit a pull request
 
 ## License
 This project is licensed under the MIT License.
