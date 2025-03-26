@@ -39,10 +39,10 @@ The **Food Recipes** project is a web application that allows users to browse, s
 ### Monetization
 - Users can buy premium recipes
 
-## Tech Stack (Suggested)
-- **Frontend:** React.js / Vue.js
+## Tech Stacks Used
 - **Backend:** Golang
 - **Database:** PostgreSQL
+- **Payment"** Chappa
 - **Authentication:** JWT 
 
 
