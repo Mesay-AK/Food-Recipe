@@ -42,7 +42,7 @@ The **Food Recipes** project is a web application that allows users to browse, s
 ## Tech Stacks Used
 - **Backend:** Golang
 - **Database:** PostgreSQL
-- **Payment"** Chappa
+- **Payment:** Chappa
 - **Authentication:** JWT 
 
 
